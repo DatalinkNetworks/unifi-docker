@@ -24,7 +24,6 @@ services:
       - ./unifi.env
     volumes:
       - config:/config
-      - backups:/backups
     ports:
       - 8443:8443
       - 3478:3478/udp
