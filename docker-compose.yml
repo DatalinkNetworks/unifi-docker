@@ -1,29 +1,32 @@
 services:
-  unifi-network-application-db:
+  unifi-db:
     image: mongo:7.0
-    container_name: unifi-network-application-db
+    container_name: unifi-db
     restart: unless-stopped
     env_file:
       - ./unifi.env
-    networks:
-      - backend
     volumes:
       - data:/data/db
       - ./init-mongo.js:/docker-entrypoint-initdb.d/init-mongo.js:ro
+    networks:
+      - backend
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
 
-  unifi-network-application:
+  unifi:
     image: lscr.io/linuxserver/unifi-network-application:latest
-    container_name: unifi-network-application
+    container_name: unifi
     restart: unless-stopped
     depends_on:
-      unifi-network-application-db:
+      unifi-db:
         condition: service_healthy
     env_file:
       - ./unifi.env
     volumes:
       - config:/config
+    networks:
+      - unifi
+      - backend
     ports:
       - 8443:8443
       - 3478:3478/udp
@@ -34,12 +37,11 @@ services:
       - 8880:8880 #optional
       - 6789:6789 #optional
       - 5514:5514/udp #optional
-    networks:
-      - host
-      - backend
 
 networks:
   backend:
+  unifi:
+    driver: bridge
 
 volumes:
   data:
